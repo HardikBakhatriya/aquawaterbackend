@@ -23,10 +23,13 @@ const getBanners = async (req, res) => {
     }
 
     const banners = await Banner.find(query).sort({ order: 1 });
-
+    const bannerResponse = banners.map(banner => ({
+      ...banner._doc,
+      image: banner.image.url,
+    }));
     res.json({
       success: true,
-      data: banners,
+      data: bannerResponse,
     });
   } catch (error) {
     res.status(500).json({

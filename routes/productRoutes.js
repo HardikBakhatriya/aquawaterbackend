@@ -41,10 +41,10 @@ const handleProductUpload = (req, res, next) => {
 
 
 // Public routes
-router.get('/', authenticateToken, getProducts);
+router.get('/', getProducts);
 router.get('/categories', authenticateToken, getCategories);
 router.get('/slug/:slug', authenticateToken, getProductBySlug);
-router.get('/:id', authenticateToken, getProductById);
+router.get('/:id', getProductById);
 
 router.post('/', authenticateToken,handleProductUpload, createProduct);
 router.put('/:id', authenticateToken, handleProductUpload, updateProduct);

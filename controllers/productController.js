@@ -4,6 +4,8 @@ const { deleteImage, getPublicIdFromUrl } = require('../config/cloudinary');
 // @desc    Get all products
 // @route   GET /api/products
 // @access  Public
+// Parse JSON array safely
+
 const getProducts = async (req, res) => {
   try {
     const {
@@ -85,7 +87,7 @@ const getProducts = async (req, res) => {
 // @access  Public
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('category');
 
     if (!product) {
       return res.status(404).json({
@@ -154,7 +156,7 @@ const createProduct = async (req, res) => {
       tags,
     } = req.body;
 
-    // Process uploaded images
+    // Images
     const images = req.files
       ? req.files.map((file) => ({
           url: file.path,
@@ -162,22 +164,32 @@ const createProduct = async (req, res) => {
         }))
       : [];
 
-    // Parse features if it's a string
-    let parsedFeatures = features;
-    if (typeof features === 'string') {
-      parsedFeatures = features.split(',').map((f) => f.trim());
-    }
+    // Helper to safely parse JSON fields
+    const safeJsonParse = (value, fallback) => {
+      if (!value) return fallback;
+      if (Array.isArray(value)) return value;
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : fallback;
+      } catch {
+        return value
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean);
+      }
+    };
 
-    // Parse specs if it's a string
+    const parsedFeatures = safeJsonParse(features, []);
+    const parsedTags = safeJsonParse(tags, []);
+
+    // Parse specs (object)
     let parsedSpecs = specs;
-    if (typeof specs === 'string') {
-      parsedSpecs = JSON.parse(specs);
-    }
-
-    // Parse tags if it's a string
-    let parsedTags = tags;
-    if (typeof tags === 'string') {
-      parsedTags = tags.split(',').map((t) => t.trim());
+    if (typeof specs === "string") {
+      try {
+        parsedSpecs = JSON.parse(specs);
+      } catch (e) {
+        parsedSpecs = {};
+      }
     }
 
     const product = await Product.create({
@@ -198,11 +210,10 @@ const createProduct = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Product created successfully',
+      message: "Product created successfully",
       data: product,
     });
   } catch (error) {
-    // Delete uploaded images if product creation fails
     if (req.files) {
       for (const file of req.files) {
         await deleteImage(file.filename);
@@ -211,11 +222,12 @@ const createProduct = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: 'Error creating product',
+      message: "Error creating product",
       error: error.message,
     });
   }
 };
+
 
 // @desc    Update product
 // @route   PUT /api/products/:id
@@ -227,7 +239,7 @@ const updateProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found',
+        message: "Product not found",
       });
     }
 
@@ -248,63 +260,96 @@ const updateProduct = async (req, res) => {
       removeImages,
     } = req.body;
 
-    // Handle image removal
+    // ---------- Helper: parse JSON arrays safely ----------
+    const safeJsonArray = (value, fallback = []) => {
+      if (!value) return fallback;
+      if (Array.isArray(value)) return value; // already an array
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : fallback;
+      } catch {
+        return value.split(",").map((v) => v.trim()).filter(Boolean);
+      }
+    };
+
+    // ---------- Helper: parse JSON object safely ----------
+    const safeJsonObject = (value, fallback = {}) => {
+      if (!value) return fallback;
+      if (typeof value === "object") return value;
+      try {
+        return JSON.parse(value);
+      } catch {
+        return fallback;
+      }
+    };
+
+    // ---------- Remove Images ----------
     if (removeImages) {
-      const imagesToRemove = Array.isArray(removeImages) ? removeImages : [removeImages];
-      for (const publicId of imagesToRemove) {
+      const arr = Array.isArray(removeImages) ? removeImages : [removeImages];
+      for (const publicId of arr) {
         await deleteImage(publicId);
         product.images = product.images.filter((img) => img.publicId !== publicId);
       }
     }
 
-    // Add new images
-    if (req.files && req.files.length > 0) {
+    // ---------- Add New Images ----------
+    if (req.files?.length) {
       const newImages = req.files.map((file) => ({
         url: file.path,
         publicId: file.filename,
       }));
-      product.images = [...product.images, ...newImages];
+      product.images.push(...newImages);
     }
 
-    // Update fields
+    // ---------- Update Fields ----------
     if (name) product.name = name;
     if (category) product.category = category;
-    if (price) product.price = Number(price);
-    if (discountPrice !== undefined) {
+    if (price !== undefined) product.price = Number(price);
+    if (discountPrice !== undefined)
       product.discountPrice = discountPrice ? Number(discountPrice) : undefined;
-    }
-    if (description) product.description = description;
+    if (description !== undefined) product.description = description;
     if (shortDescription !== undefined) product.shortDescription = shortDescription;
-    if (features) {
-      product.features =
-        typeof features === 'string' ? features.split(',').map((f) => f.trim()) : features;
+
+    // Features fix
+    if (features !== undefined) {
+      product.features = safeJsonArray(features);
     }
-    if (specs) {
-      product.specs = typeof specs === 'string' ? JSON.parse(specs) : specs;
+
+    // Specs fix
+    if (specs !== undefined) {
+      product.specs = safeJsonObject(specs);
     }
+
     if (stock !== undefined) product.stock = Number(stock);
     if (sku !== undefined) product.sku = sku;
-    if (isActive !== undefined) product.isActive = isActive === 'true' || isActive === true;
-    if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true' || isFeatured === true;
-    if (tags) {
-      product.tags = typeof tags === 'string' ? tags.split(',').map((t) => t.trim()) : tags;
+
+    if (isActive !== undefined)
+      product.isActive = isActive === "true" || isActive === true;
+
+    if (isFeatured !== undefined)
+      product.isFeatured = isFeatured === "true" || isFeatured === true;
+
+    // Tags fix
+    if (tags !== undefined) {
+      product.tags = safeJsonArray(tags);
     }
 
     await product.save();
 
     res.json({
       success: true,
-      message: 'Product updated successfully',
+      message: "Product updated successfully",
       data: product,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error updating product',
+      message: "Error updating product",
       error: error.message,
     });
   }
 };
+
 
 // @desc    Delete product
 // @route   DELETE /api/products/:id
