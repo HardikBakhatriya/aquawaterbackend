@@ -1,5 +1,4 @@
 const dotenv = require('dotenv');
-const Product = require('../models/Product');
 dotenv.config();
 const SHIPROCKET_CREDENTIALS = {
     email: process.env.SHIPROCKET_EMAIL,

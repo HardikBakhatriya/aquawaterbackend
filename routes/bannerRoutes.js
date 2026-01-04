@@ -8,7 +8,7 @@ const {
   updateBanner,
   deleteBanner,
   reorderBanners,
-} = require('../controllers/bannerController');
+} = require('../controllers/bannerController.js');
 const { uploadBannerImage } = require('../config/cloudinary');
 
 // Multer error handler middleware

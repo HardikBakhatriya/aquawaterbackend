@@ -1,4 +1,4 @@
-const Article = require('../models/Article');
+const Article = require('../models/Article.js');
 const cloudinary = require('cloudinary').v2;
 
 // @desc    Get all articles (public - only published)

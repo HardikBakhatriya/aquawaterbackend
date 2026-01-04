@@ -1,5 +1,5 @@
-const Banner = require('../models/Banner');
-const { deleteImage } = require('../config/cloudinary');
+const Banner = require('../models/Banner.js');
+const { deleteImage } = require('../config/cloudinary.js');
 
 // @desc    Get all active banners
 // @route   GET /api/banners

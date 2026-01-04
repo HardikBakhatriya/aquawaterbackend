@@ -11,7 +11,7 @@ const {
   updateArticle,
   deleteArticle,
   getRelatedArticles,
-} = require('../controllers/articleController');
+} = require('../controllers/articleController.js');
 
 // Public routes
 router.get('/', getArticles);

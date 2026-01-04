@@ -1,5 +1,5 @@
-const Product = require('../models/Product');
-const { deleteImage, getPublicIdFromUrl } = require('../config/cloudinary');
+const Product = require('../models/Product.js');
+const { deleteImage } = require('../config/cloudinary.js');
 
 // @desc    Get all products
 // @route   GET /api/products

@@ -1,6 +1,6 @@
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const razorpay = require('../config/razorpay');
+const Order = require('../models/Order.js');
+const Product = require('../models/Product.js');
+const razorpay = require('../config/razorpay.js');
 const crypto = require('crypto');
 
 // @desc    Create Razorpay order

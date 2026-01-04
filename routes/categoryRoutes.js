@@ -8,8 +8,8 @@ const {
   deleteCategory,
   reorderCategories,
   updateProductsCounts,
-} = require('../controllers/categoryController');
-const authenticateToken = require('../middlewares/authenticateToken');
+} = require('../controllers/categoryController.js');
+const authenticateToken = require('../middlewares/authenticateToken.js');
 
 // Public routes
 router.get('/', getCategories);

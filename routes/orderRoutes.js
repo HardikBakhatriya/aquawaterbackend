@@ -12,7 +12,7 @@ const {
   getOrderStats,
   getRevenueChartData,
   getWeeklyOrdersChartData,
-} = require('../controllers/orderController');
+} = require('../controllers/orderController.js');
 
 // Public routes
 router.post('/create-razorpay-order', createRazorpayOrder);

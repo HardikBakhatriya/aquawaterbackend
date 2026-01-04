@@ -8,9 +8,9 @@ const {
   updateProduct,
   deleteProduct,
   getCategories,
-} = require('../controllers/productController');
-const { uploadProductImages } = require('../config/cloudinary');
-const authenticateToken = require('../middlewares/authenticateToken');
+} = require('../controllers/productController.js');
+const { uploadProductImages } = require('../config/cloudinary.js');
+const authenticateToken = require('../middlewares/authenticateToken.js');
 // Wrapper to handle multer errors properly
 const handleProductUpload = (req, res, next) => {
   uploadProductImages(req, res, function (err) {
