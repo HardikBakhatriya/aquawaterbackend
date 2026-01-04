@@ -12,6 +12,7 @@ const {
   deleteArticle,
   getRelatedArticles,
 } = require('../controllers/articleController.js');
+console.log('🚀 ARTICLES ROUTER FILE LOADED');
 
 /* =========================
    ADMIN ROUTES (FIRST)
