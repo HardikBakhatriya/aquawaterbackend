@@ -1,9 +1,13 @@
-const User = require('../models/User.js'); 
+const User = require('../models/User.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-// @desc    Get all active banners
+
+// JWT expiration time (24 hours)
+const JWT_EXPIRES_IN = '24h';
+
+// @desc    Get all users
 // @route   GET /api/users
-// @access  Public
+// @access  Private/Admin
 const getUsers = async (req, res) => {
   try {
     const users = await User.find();
@@ -21,10 +25,9 @@ const getUsers = async (req, res) => {
   }
 };
 
-
 // @desc    Get single user
 // @route   GET /api/users/:id
-// @access  Public
+// @access  Private/Admin
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -63,9 +66,6 @@ const deleteUser = async (req, res) => {
       });
     }
 
-    // Delete image from Cloudinary
-    await deleteImage(user.image.publicId);
-
     await user.deleteOne();
 
     res.json({
@@ -81,27 +81,52 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+
+    // Explicitly select password field for comparison
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(404).json({
+      return res.status(401).json({
         success: false,
-        message: 'User not found',
+        message: 'Invalid credentials',
       });
     }
+
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid password',
+        message: 'Invalid credentials',
       });
     }
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+
+    // Create token with expiration and role
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    // Return user data without password
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt
+    };
+
     res.json({
       success: true,
-      data: user,
+      data: userResponse,
       token: token,
     });
   } catch (error) {
@@ -113,9 +138,36 @@ const loginUser = async (req, res) => {
   }
 };
 
+// @desc    Get current user profile
+// @route   GET /api/auth/me
+// @access  Private
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching user profile',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
   deleteUser,
-  loginUser
+  loginUser,
+  getMe
 };

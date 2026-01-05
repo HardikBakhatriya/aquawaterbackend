@@ -167,12 +167,9 @@ const deleteCategory = async (req, res) => {
         message: 'Category not found',
       });
     }
-    // Check if any products are using this category (by ID or name for backward compatibility)
+    // Check if any products are using this category
     const productsCount = await Product.countDocuments({
-      $or: [
-        { category: req.params.id },
-        { category: category._id },
-      ],
+      category: category._id,
     });
     if (productsCount > 0) {
       return res.status(400).json({
@@ -240,10 +237,7 @@ const updateProductsCounts = async (req, res) => {
 
     for (const category of categories) {
       const count = await Product.countDocuments({
-        $or: [
-          { category: category._id },
-          { category: category.name },
-        ],
+        category: category._id,
         isActive: true,
       });
       category.productsCount = count;

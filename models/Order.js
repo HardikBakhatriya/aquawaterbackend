@@ -80,6 +80,11 @@ const orderSchema = new mongoose.Schema(
         enum: ['razorpay', 'cod'],
         default: 'razorpay',
       },
+      type: {
+        type: String,
+        enum: ['card', 'upi', 'netbanking', 'wallet', 'emi', 'cod', 'other'],
+        default: 'other',
+      },
       status: {
         type: String,
         enum: ['pending', 'completed', 'failed', 'refunded'],

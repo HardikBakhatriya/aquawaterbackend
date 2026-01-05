@@ -18,6 +18,7 @@ const getProducts = async (req, res) => {
       search,
       featured,
       active,
+      admin,
     } = req.query;
 
     // Build query
@@ -43,6 +44,10 @@ const getProducts = async (req, res) => {
 
     if (active !== 'false') {
       query.isActive = true;
+    }
+    if (admin === 'true') {
+      delete query.isActive;
+      delete query.isFeatured;
     }
 
     // Build sort

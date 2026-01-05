@@ -12,33 +12,33 @@ const {
   deleteArticle,
   getRelatedArticles,
 } = require('../controllers/articleController.js');
-console.log('🚀 ARTICLES ROUTER FILE LOADED');
+const authenticateToken = require('../middlewares/authenticateToken.js');
 
 /* =========================
-   ADMIN ROUTES (FIRST)
+   ADMIN ROUTES (FIRST - protected)
 ========================= */
-router.get('/admin/all', getAllArticlesAdmin);
+router.get('/admin/all', authenticateToken, getAllArticlesAdmin);
 
 /* =========================
-   STATIC ROUTES
+   STATIC ROUTES (public)
 ========================= */
 router.get('/categories', getArticleCategories);
 router.get('/tags', getArticleTags);
 
 /* =========================
-   CRUD ROUTES
+   CRUD ROUTES (protected)
 ========================= */
-router.post('/', uploadArticleImage, createArticle);
-router.put('/:id', uploadArticleImage, updateArticle);
-router.delete('/:id', deleteArticle);
+router.post('/', authenticateToken, uploadArticleImage, createArticle);
+router.put('/:id', authenticateToken, uploadArticleImage, updateArticle);
+router.delete('/:id', authenticateToken, deleteArticle);
 
 /* =========================
-   RELATED (MORE SPECIFIC)
+   RELATED (public)
 ========================= */
 router.get('/:id/related', getRelatedArticles);
 
 /* =========================
-   GENERIC (LAST)
+   GENERIC (public)
 ========================= */
 router.get('/:idOrSlug', getArticleById);
 router.get('/', getArticles);

@@ -10,6 +10,7 @@ const {
   reorderBanners,
 } = require('../controllers/bannerController.js');
 const { uploadBannerImage } = require('../config/cloudinary');
+const authenticateToken = require('../middlewares/authenticateToken.js');
 
 // Multer error handler middleware
 const handleMulterError = (err, req, res, next) => {
@@ -32,11 +33,11 @@ const handleMulterError = (err, req, res, next) => {
 router.get('/', getBanners);
 router.get('/:id', getBannerById);
 
-// Admin routes (add authentication middleware in production)
-router.get('/admin/all', getAllBanners);
-router.post('/', uploadBannerImage, handleMulterError, createBanner);
-router.put('/reorder', reorderBanners);
-router.put('/:id', uploadBannerImage, handleMulterError, updateBanner);
-router.delete('/:id', deleteBanner);
+// Admin routes (protected)
+router.get('/admin/all', authenticateToken, getAllBanners);
+router.post('/', authenticateToken, uploadBannerImage, handleMulterError, createBanner);
+router.put('/reorder', authenticateToken, reorderBanners);
+router.put('/:id', authenticateToken, uploadBannerImage, handleMulterError, updateBanner);
+router.delete('/:id', authenticateToken, deleteBanner);
 
 module.exports = router;
